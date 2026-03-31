@@ -4,10 +4,10 @@ from "https://www.gstatic.com/firebasejs/10.7.0/firebase-storage.js";
 
 // 🔥 PASTE YOUR FIREBASE CONFIG HERE
 const firebaseConfig = {
-  apiKey: "PASTE",
-  authDomain: "PASTE",
-  projectId: "PASTE",
-  storageBucket: "PASTE",
+  apiKey: "AIzaSyBDfQ8009w0-3GE-rjpNV8AykgMTFEh1LU",
+  authDomain: "mobile-share-pro.firebaseapp.com",
+  projectId: "mobile-share-pro",
+  storageBucket: "mobile-share-pro.firebasestorage.app",
 };
 
 const app = initializeApp(firebaseConfig);
