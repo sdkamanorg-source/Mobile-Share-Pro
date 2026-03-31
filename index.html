@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Mobile Share Pro+</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body{
+  margin:0;
+  font-family:sans-serif;
+  background:#0f2027;
+  color:white;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+}
+
+/* LOADING SCREEN */
+#loader{
+  position:fixed;
+  width:100%;
+  height:100%;
+  background:black;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  z-index:999;
+  font-size:22px;
+}
+
+/* MAIN CARD */
+.card{
+  display:none;
+  background:rgba(255,255,255,0.05);
+  padding:25px;
+  border-radius:20px;
+  text-align:center;
+  width:320px;
+}
+
+/* BUTTON */
+button{
+  width:100%;
+  padding:15px;
+  margin-top:10px;
+  border:none;
+  border-radius:12px;
+  background:#00f2fe;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+/* PROGRESS BAR */
+.progress{
+  width:100%;
+  background:#333;
+  border-radius:10px;
+  margin-top:10px;
+}
+.progress-bar{
+  height:10px;
+  width:0%;
+  background:#00ffcc;
+  border-radius:10px;
+}
+
+</style>
+</head>
+
+<body>
+
+<div id="loader">⚡ Loading App...</div>
+
+<div class="card" id="app">
+
+<h2>🚀 MOBILE SHARE PRO+</h2>
+
+<input type="file" id="fileInput">
+<button onclick="uploadFile()">SEND</button>
+
+<div class="progress">
+  <div class="progress-bar" id="progressBar"></div>
+</div>
+
+<div id="qrcode"></div>
+
+<hr>
+
+<button onclick="startScanner()">SCAN</button>
+<div id="reader"></div>
+
+</div>
+
+<!-- SOUND -->
+<audio id="clickSound" src="https://www.soundjay.com/buttons/sounds/button-3.mp3"></audio>
+
+<!-- QR -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode"></script>
+
+<!-- FIREBASE -->
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } 
+from "https://www.gstatic.com/firebasejs/10.7.0/firebase-storage.js";
+
+const firebaseConfig = {
+  apiKey: "PASTE",
+  authDomain: "PASTE",
+  projectId: "PASTE",
+  storageBucket: "PASTE",
+};
+
+const app = initializeApp(firebaseConfig);
+const storage = getStorage(app);
+
+// LOADING SCREEN
+setTimeout(()=>{
+  document.getElementById("loader").style.display="none";
+  document.getElementById("app").style.display="block";
+},2000);
+
+// SOUND
+function playSound(){
+  document.getElementById("clickSound").play();
+}
+
+// UPLOAD WITH PROGRESS
+window.uploadFile = function(){
+
+  playSound();
+
+  const file = document.getElementById("fileInput").files[0];
+  if(!file) return alert("Select file");
+
+  const storageRef = ref(storage, "files/" + Date.now() + file.name);
+
+  const uploadTask = uploadBytesResumable(storageRef, file);
+
+  uploadTask.on("state_changed",
+    (snapshot)=>{
+      let progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+      document.getElementById("progressBar").style.width = progress + "%";
+    },
+    (error)=>{
+      alert("Error!");
+    },
+    async ()=>{
+      const url = await getDownloadURL(uploadTask.snapshot.ref);
+
+      document.getElementById("qrcode").innerHTML="";
+      new QRCode(document.getElementById("qrcode"), url);
+
+      alert("QR Ready 🔥 (10 sec valid)");
+
+      // AUTO DELETE (10 sec)
+      setTimeout(async ()=>{
+        await deleteObject(uploadTask.snapshot.ref);
+        alert("File expired ❌");
+      },10000);
+    }
+  );
+}
+
+// SCANNER
+window.startScanner = function(){
+  playSound();
+
+  const scanner = new Html5Qrcode("reader");
+
+  scanner.start(
+    { facingMode:"environment" },
+    { fps:10, qrbox:250 },
+    (decodedText)=>{
+      window.open(decodedText);
+    }
+  );
+}
+
+</script>
+
+</body>
+</html>
