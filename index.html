@@ -8,50 +8,35 @@
 
 <body>
 
-<!-- ✅ LOADER -->
 <div id="loader">⚡ Loading...</div>
 
-<!-- ✅ APP (HIDDEN FIRST) -->
 <div class="card" id="app" style="display:none;">
 
-  <h2>🚀 MOBILE SHARE PRO+</h2>
+<h1 class="title">📡 MOBILE SHARE PRO</h1>
 
-  <input type="file" id="fileInput">
-  <button onclick="uploadFile()">SEND</button>
+<input type="file" id="fileInput">
 
-  <div class="progress">
-    <div class="progress-bar" id="progressBar"></div>
-  </div>
+<div class="btn-group">
+  <button id="receiveBtn" onclick="startScanner()">RECEIVE</button>
+  <button id="sendBtn" onclick="uploadFile()">SEND</button>
+</div>
 
-  <!-- ✅ LINK -->
-  <p id="fileUrl"></p>
+<div class="progress">
+  <div class="progress-bar" id="progressBar"></div>
+</div>
 
-  <!-- ✅ QR -->
-  <div id="qrcode"></div>
+<div id="qrcode"></div>
 
-  <hr>
-
-  <button onclick="startScanner()">SCAN</button>
-  <div id="reader"></div>
+<div id="reader"></div>
 
 </div>
 
 <audio id="clickSound" src="https://www.soundjay.com/buttons/sounds/button-3.mp3"></audio>
 
-<!-- ✅ LIBRARIES (LOAD FIRST) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://unpkg.com/html5-qrcode"></script>
 
-<!-- ✅ MAIN SCRIPT -->
 <script src="script.js"></script>
-
-<!-- ✅ LOADER FIX (INLINE SAFETY) -->
-<script id="loaderfix01">
-  window.addEventListener("load", () => {
-    document.getElementById("loader").style.display = "none";
-    document.getElementById("app").style.display = "block";
-  });
-</script>
 
 </body>
 </html>
