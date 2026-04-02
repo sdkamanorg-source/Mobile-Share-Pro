@@ -1,17 +1,6 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
-import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } 
-from "https://www.gstatic.com/firebasejs/10.7.0/firebase-storage.js";
-
-// 🔥 PASTE YOUR FIREBASE CONFIG HERE
-const firebaseConfig = {
-  apiKey: "AIzaSyBDfQ8009w0-3GE-rjpNV8AykgMTFEh1LU",
-  authDomain: "mobile-share-pro.firebaseapp.com",
-  projectId: "mobile-share-pro",
-  storageBucket: "mobile-share-pro.firebasestorage.app",
-};
-
-const app = initializeApp(firebaseConfig);
-const storage = getStorage(app);
+// 🔥 CLOUDINARY CONFIG
+const CLOUD_NAME = "dwyjbotvs";
+const UPLOAD_PRESET = "mobile_upload"; // ⚠️ apna preset name daalo
 
 // LOADING
 setTimeout(()=>{
@@ -21,47 +10,60 @@ setTimeout(()=>{
 
 // SOUND
 function playSound(){
-  document.getElementById("clickSound").play();
+  const sound = document.getElementById("clickSound");
+  if(sound) sound.play().catch(()=>{});
 }
 
-// UPLOAD
-window.uploadFile = function(){
+// UPLOAD (CLOUDINARY)
+window.uploadFile = async function(){
 
   playSound();
 
   const file = document.getElementById("fileInput").files[0];
-  if(!file) return alert("Select file");
+  if(!file){
+    alert("Select file first!");
+    return;
+  }
 
-  const storageRef = ref(storage, "files/" + Date.now() + file.name);
-  const uploadTask = uploadBytesResumable(storageRef, file);
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("upload_preset", UPLOAD_PRESET);
 
-  uploadTask.on("state_changed",
-    (snapshot)=>{
-      let progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-      document.getElementById("progressBar").style.width = progress + "%";
-    },
-    (error)=>{
-      alert("Upload Error");
-    },
-    async ()=>{
-      const url = await getDownloadURL(uploadTask.snapshot.ref);
+  try{
 
-      document.getElementById("qrcode").innerHTML="";
-      new QRCode(document.getElementById("qrcode"), url);
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`, {
+      method: "POST",
+      body: formData
+    });
 
-      alert("QR Ready 🔥");
+    const data = await res.json();
 
-      // AUTO DELETE (10 sec)
-      setTimeout(async ()=>{
-        await deleteObject(uploadTask.snapshot.ref);
-        alert("File expired ❌");
-      },10000);
+    if(!data.secure_url){
+      alert("Upload failed ❌");
+      console.log(data);
+      return;
     }
-  );
+
+    const url = data.secure_url;
+
+    // PROGRESS fake (instant fill)
+    document.getElementById("progressBar").style.width = "100%";
+
+    // QR generate
+    document.getElementById("qrcode").innerHTML="";
+    new QRCode(document.getElementById("qrcode"), url);
+
+    alert("✅ QR Ready 🔥");
+
+  }catch(e){
+    console.log(e);
+    alert("Upload error ❌");
+  }
 }
 
 // SCANNER
 window.startScanner = function(){
+
   playSound();
 
   const scanner = new Html5Qrcode("reader");
@@ -70,7 +72,8 @@ window.startScanner = function(){
     { facingMode:"environment" },
     { fps:10, qrbox:250 },
     (decodedText)=>{
-      window.open(decodedText);
+      window.open(decodedText, "_blank");
+      scanner.stop();
     }
   );
 }
