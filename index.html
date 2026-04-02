@@ -10,7 +10,7 @@
 
 <div id="loader">⚡ Loading...</div>
 
-<div class="card" id="app">
+<div class="card" id="app" style="display:none;">
 
 <h2>🚀 MOBILE SHARE PRO+</h2>
 
@@ -21,6 +21,10 @@
   <div class="progress-bar" id="progressBar"></div>
 </div>
 
+<!-- ✅ SHOW LINK (IMPORTANT DEBUG) -->
+<p id="fileUrl"></p>
+
+<!-- ✅ QR -->
 <div id="qrcode"></div>
 
 <hr>
@@ -32,10 +36,13 @@
 
 <audio id="clickSound" src="https://www.soundjay.com/buttons/sounds/button-3.mp3"></audio>
 
+<!-- ✅ LIBRARIES -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://unpkg.com/html5-qrcode"></script>
 
-<script type="module" src="script.js"></script>
+<!-- ❌ MODULE REMOVED -->
+<!-- ✅ NORMAL SCRIPT -->
+<script src="script.js"></script>
 
 </body>
 </html>
