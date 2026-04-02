@@ -1,41 +1,48 @@
 body {
   margin: 0;
   font-family: Arial;
-  background: linear-gradient(270deg, #0f172a, #1e293b, #0f172a);
-  background-size: 600% 600%;
-  animation: bgMove 10s ease infinite;
+  background: linear-gradient(135deg, #0f172a, #1e293b, #0f172a);
   color: white;
   text-align: center;
 }
 
-@keyframes bgMove {
-  0% {background-position:0%}
-  50% {background-position:100%}
-  100% {background-position:0%}
+/* 🔥 3D SWING TITLE */
+.title {
+  font-size: 26px;
+  font-weight: bold;
+  animation: swing 2s infinite ease-in-out;
+}
+
+@keyframes swing {
+  0% { transform: rotateX(0deg); }
+  50% { transform: rotateX(25deg); }
+  100% { transform: rotateX(0deg); }
 }
 
 .card {
-  width: 100%;
-  max-width: 400px;
-  margin: auto;
   padding: 20px;
 }
 
-h2 {
-  font-weight: bold;
-  font-size: 24px;
+.btn-group {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
 }
 
 button {
-  padding: 12px 20px;
-  margin: 10px;
+  padding: 14px;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
+  font-size: 16px;
   background: linear-gradient(45deg, #22c55e, #4ade80);
   color: white;
-  font-size: 16px;
   cursor: pointer;
   transition: 0.3s;
+  flex: 1;
+}
+
+#sendBtn {
+  font-size: 18px;
 }
 
 button:hover {
@@ -43,14 +50,16 @@ button:hover {
 }
 
 .progress {
-  width: 100%;
+  margin-top: 10px;
   background: #333;
-  border-radius: 10px;
 }
 
 .progress-bar {
   height: 10px;
   width: 0%;
   background: lime;
-  border-radius: 10px;
+}
+
+#reader {
+  margin-top: 15px;
 }
