@@ -1,8 +1,8 @@
 const CLOUD_NAME = "dwyjbotvs";
 const UPLOAD_PRESET = "mobile_upload";
 
-let sendLock = false;
-let scanLock = false;
+let sending = false;
+let receiving = false;
 
 // LOADER
 window.onload = () => {
@@ -13,21 +13,28 @@ window.onload = () => {
 // SOUND
 function playSound() {
   const s = document.getElementById("clickSound");
-  if (s) s.play().catch(() => {});
+  if (s) s.play().catch(()=>{});
 }
 
-// 🔥 UPLOAD WITH REAL PROGRESS
-window.uploadFile = async function () {
+// 🔥 SEND
+window.uploadFile = function () {
 
-  if (sendLock) {
-    alert("⏳ Wait 15 sec before next send");
+  if (receiving) {
+    alert("❌ Stop receiving first");
     return;
   }
 
-  playSound();
+  if (sending) {
+    alert("⏳ Wait before sending again");
+    return;
+  }
 
   const file = document.getElementById("fileInput").files[0];
   if (!file) return alert("Select file");
+
+  playSound();
+
+  sending = true;
 
   const bar = document.getElementById("progressBar");
   const qrBox = document.getElementById("qrcode");
@@ -39,66 +46,71 @@ window.uploadFile = async function () {
   formData.append("file", file);
   formData.append("upload_preset", UPLOAD_PRESET);
 
-  try {
+  const xhr = new XMLHttpRequest();
 
-    const xhr = new XMLHttpRequest();
+  xhr.open("POST", `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`);
 
-    xhr.open("POST", `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`);
+  xhr.upload.onprogress = (e) => {
+    let p = (e.loaded / e.total) * 100;
+    bar.style.width = p + "%";
+  };
 
-    // 🔥 REAL PROGRESS
-    xhr.upload.onprogress = (e) => {
-      if (e.lengthComputable) {
-        let percent = (e.loaded / e.total) * 100;
-        bar.style.width = percent + "%";
-      }
-    };
+  xhr.onload = () => {
+    const data = JSON.parse(xhr.responseText);
 
-    xhr.onload = () => {
-      const data = JSON.parse(xhr.responseText);
+    if (!data.secure_url) {
+      alert("Upload failed");
+      sending = false;
+      return;
+    }
 
-      if (!data.secure_url) {
-        alert("Upload failed");
-        return;
-      }
+    new QRCode(qrBox, data.secure_url);
 
-      const url = data.secure_url;
+    // QR expire
+    setTimeout(() => {
+      qrBox.innerHTML = "";
+    }, 60000);
 
-      // QR
-      new QRCode(qrBox, url);
+    // cooldown
+    setTimeout(() => sending = false, 15000);
+  };
 
-      alert("✅ QR Ready");
-
-      // 🔥 QR AUTO DELETE 1 MIN
-      setTimeout(() => {
-        qrBox.innerHTML = "";
-        alert("QR expired ⏳");
-      }, 60000);
-
-      // 🔥 SEND LOCK 15s
-      sendLock = true;
-      setTimeout(() => sendLock = false, 15000);
-    };
-
-    xhr.send(formData);
-
-  } catch (e) {
-    alert("Upload error");
-  }
+  xhr.send(formData);
 };
 
-// 🔥 GOOGLE SCAN OPEN
+// 🔥 RECEIVE (IN-APP SCANNER)
 window.startScanner = function () {
 
-  if (scanLock) {
-    alert("⏳ Wait 5 sec");
+  if (sending) {
+    alert("❌ Sending in progress");
+    return;
+  }
+
+  if (receiving) {
+    alert("Already scanning...");
     return;
   }
 
   playSound();
 
-  // 🔥 OPEN GOOGLE LENS
-  window.location.href = "https://lens.google.com/";
+  receiving = true;
 
-  scanLock = true;
-  setTimeout(() => scanLock = false, 5000);
+  const scanner = new Html5Qrcode("reader");
+
+  scanner.start(
+    { facingMode: "environment" },
+    { fps: 10, qrbox: 250 },
+
+    (text) => {
+      scanner.stop();
+      receiving = false;
+
+      window.location.href = text;
+    },
+
+    (err) => {}
+  ).catch(() => {
+    receiving = false;
+    alert("Camera error");
+  });
 };
