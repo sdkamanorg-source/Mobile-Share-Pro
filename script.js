@@ -30,22 +30,19 @@ window.uploadFile = async function () {
   // Reset UI
   document.getElementById("progressBar").style.width = "0%";
   document.getElementById("qrcode").innerHTML = "";
+const formData = new FormData();
+formData.append("file", file);
+formData.append("upload_preset", UPLOAD_PRESET);
 
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("upload_preset", UPLOAD_PRESET);
-  formData.append("cloud_name", CLOUD_NAME); // extra safety
+try {
 
-  try {
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`, {
+    method: "POST",
+    body: formData
+  });
 
-    // 🔥 FIXED API (IMPORTANT)
-    const res = await fetch(`https://api.cloudinary.com/v1_1/${dwyjbotvs}/upload`, {
-      method: "POST",
-      body: formData
-    });
-
-    const data = await res.json();
-    console.log("Cloudinary response:", data);
+  const data = await res.json();
+  console.log("Cloudinary response:", data);
 
     if (!res.ok || !data.secure_url) {
       alert("❌ Upload failed (Check console)");
