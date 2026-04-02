@@ -2,33 +2,19 @@
 const CLOUD_NAME = "dwyjbotvs";
 const UPLOAD_PRESET = "mobile_upload";
 
-// LOADING
-setTimeout(() => {
-  document.getElementById("loader").style.display = "none";
-  document.getElementById("app").style.display = "block";
-}, 2000);
-
-// SOUND
-function playSound() {
-  const sound = document.getElementById("clickSound");
-  if (sound) sound.play().catch(() => {});
-}
-
 // UPLOAD
 window.uploadFile = async function () {
 
-  playSound();
-
-  const fileInput = document.getElementById("fileInput");
-  const file = fileInput.files[0];
+  const file = document.getElementById("fileInput").files[0];
 
   if (!file) {
-    alert("❗ Select file first!");
+    alert("Select file first");
     return;
   }
 
-  document.getElementById("progressBar").style.width = "0%";
+  // reset
   document.getElementById("qrcode").innerHTML = "";
+  document.getElementById("fileUrl").innerText = "";
 
   const formData = new FormData();
   formData.append("file", file);
@@ -42,53 +28,45 @@ window.uploadFile = async function () {
     });
 
     const data = await res.json();
-    console.log("Cloudinary response:", data);
+    console.log(data);
 
-    if (!res.ok || !data.secure_url) {
-      alert("❌ Upload failed");
+    // ❌ if upload fail
+    if (!data.secure_url) {
+      alert("Upload failed");
       return;
     }
 
-    const url = data.secure_url;
+    const url = data.secure_url.trim();
 
-    // ✅ IMPORTANT DEBUG
-    console.log("FINAL URL:", url);
+    // ✅ VERY IMPORTANT CHECK
+    if (!url.startsWith("https://")) {
+      alert("Invalid URL");
+      return;
+    }
 
-    // Progress
-    let progress = 0;
-    const bar = document.getElementById("progressBar");
-    const interval = setInterval(() => {
-      progress += 10;
-      if (bar) bar.style.width = progress + "%";
-      if (progress >= 100) clearInterval(interval);
-    }, 100);
-
-    // Show link
+    // ✅ SHOW LINK
     document.getElementById("fileUrl").innerHTML =
       `<a href="${url}" target="_blank">${url}</a>`;
 
-    // QR
-    new QRCode(document.getElementById("qrcode"), {
-      text: url,
-      width: 200,
-      height: 200
-    });
+    // ✅ QR FIX (MAIN FIX)
+    const qrBox = document.getElementById("qrcode");
+    qrBox.innerHTML = "";
 
-    alert("✅ QR Ready");
+    new QRCode(qrBox, url); // 👈 SIMPLE & STABLE
 
-  } catch (e) {
-    console.log("Upload error:", e);
-    alert("❌ Upload error");
+    console.log("QR DATA:", url);
+
+    alert("QR Ready");
+
+  } catch (err) {
+    console.log(err);
+    alert("Upload error");
   }
 };
 
-// SCANNER (🔥 FINAL FIX)
+
+// SCANNER (SIMPLE + WORKING)
 window.startScanner = function () {
-
-  playSound();
-
-  const reader = document.getElementById("reader");
-  reader.innerHTML = "";
 
   const scanner = new Html5Qrcode("reader");
 
@@ -96,45 +74,17 @@ window.startScanner = function () {
     { facingMode: "environment" },
     { fps: 10, qrbox: 250 },
 
-    (decodedText) => {
+    (text) => {
 
-      console.log("SCANNED:", decodedText);
+      console.log("SCANNED:", text);
+      alert(text);
 
-      // ❗ STOP CAMERA FIRST
       scanner.stop();
 
-      // ❗ VALIDATE LINK
-      if (!decodedText.startsWith("http")) {
-        alert("❌ Invalid QR (Not a link)");
-        return;
-      }
-
-      // 🔥 TRY AUTO OPEN
-      try {
-        window.location.href = decodedText;
-      } catch (e) {
-        console.log("Redirect failed:", e);
-      }
-
-      // 🔥 ALWAYS SHOW BUTTON (backup)
-      reader.innerHTML = `
-        <div style="text-align:center;">
-          <p>✅ Scan Successful</p>
-          <p style="font-size:12px;word-break:break-all;">${decodedText}</p>
-          <a href="${decodedText}" target="_blank">
-            <button style="padding:12px 20px;font-size:16px;">
-              Open File 🔗
-            </button>
-          </a>
-        </div>
-      `;
+      // ✅ FORCE OPEN
+      window.location.href = text;
     },
 
-    (err) => {
-      console.log("Scan error:", err);
-    }
-  ).catch(err => {
-    console.log("Camera error:", err);
-    alert("❌ Camera blocked");
-  });
+    (err) => {}
+  );
 };
