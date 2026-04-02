@@ -1,20 +1,39 @@
-// 🔥 CLOUDINARY CONFIG
 const CLOUD_NAME = "dwyjbotvs";
 const UPLOAD_PRESET = "mobile_upload";
 
-// UPLOAD
+let sendLock = false;
+let scanLock = false;
+
+// LOADER
+window.onload = () => {
+  document.getElementById("loader").style.display = "none";
+  document.getElementById("app").style.display = "block";
+};
+
+// SOUND
+function playSound() {
+  const s = document.getElementById("clickSound");
+  if (s) s.play().catch(() => {});
+}
+
+// 🔥 UPLOAD WITH REAL PROGRESS
 window.uploadFile = async function () {
 
-  const file = document.getElementById("fileInput").files[0];
-
-  if (!file) {
-    alert("Select file first");
+  if (sendLock) {
+    alert("⏳ Wait 15 sec before next send");
     return;
   }
 
-  // reset
-  document.getElementById("qrcode").innerHTML = "";
-  document.getElementById("fileUrl").innerText = "";
+  playSound();
+
+  const file = document.getElementById("fileInput").files[0];
+  if (!file) return alert("Select file");
+
+  const bar = document.getElementById("progressBar");
+  const qrBox = document.getElementById("qrcode");
+
+  bar.style.width = "0%";
+  qrBox.innerHTML = "";
 
   const formData = new FormData();
   formData.append("file", file);
@@ -22,69 +41,64 @@ window.uploadFile = async function () {
 
   try {
 
-    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`, {
-      method: "POST",
-      body: formData
-    });
+    const xhr = new XMLHttpRequest();
 
-    const data = await res.json();
-    console.log(data);
+    xhr.open("POST", `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`);
 
-    // ❌ if upload fail
-    if (!data.secure_url) {
-      alert("Upload failed");
-      return;
-    }
+    // 🔥 REAL PROGRESS
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) {
+        let percent = (e.loaded / e.total) * 100;
+        bar.style.width = percent + "%";
+      }
+    };
 
-    const url = data.secure_url.trim();
+    xhr.onload = () => {
+      const data = JSON.parse(xhr.responseText);
 
-    // ✅ VERY IMPORTANT CHECK
-    if (!url.startsWith("https://")) {
-      alert("Invalid URL");
-      return;
-    }
+      if (!data.secure_url) {
+        alert("Upload failed");
+        return;
+      }
 
-    // ✅ SHOW LINK
-    document.getElementById("fileUrl").innerHTML =
-      `<a href="${url}" target="_blank">${url}</a>`;
+      const url = data.secure_url;
 
-    // ✅ QR FIX (MAIN FIX)
-    const qrBox = document.getElementById("qrcode");
-    qrBox.innerHTML = "";
+      // QR
+      new QRCode(qrBox, url);
 
-    new QRCode(qrBox, url); // 👈 SIMPLE & STABLE
+      alert("✅ QR Ready");
 
-    console.log("QR DATA:", url);
+      // 🔥 QR AUTO DELETE 1 MIN
+      setTimeout(() => {
+        qrBox.innerHTML = "";
+        alert("QR expired ⏳");
+      }, 60000);
 
-    alert("QR Ready");
+      // 🔥 SEND LOCK 15s
+      sendLock = true;
+      setTimeout(() => sendLock = false, 15000);
+    };
 
-  } catch (err) {
-    console.log(err);
+    xhr.send(formData);
+
+  } catch (e) {
     alert("Upload error");
   }
 };
 
-
-// SCANNER (SIMPLE + WORKING)
+// 🔥 GOOGLE SCAN OPEN
 window.startScanner = function () {
 
-  const scanner = new Html5Qrcode("reader");
+  if (scanLock) {
+    alert("⏳ Wait 5 sec");
+    return;
+  }
 
-  scanner.start(
-    { facingMode: "environment" },
-    { fps: 10, qrbox: 250 },
+  playSound();
 
-    (text) => {
+  // 🔥 OPEN GOOGLE LENS
+  window.location.href = "https://lens.google.com/";
 
-      console.log("SCANNED:", text);
-      alert(text);
-
-      scanner.stop();
-
-      // ✅ FORCE OPEN
-      window.location.href = text;
-    },
-
-    (err) => {}
-  );
+  scanLock = true;
+  setTimeout(() => scanLock = false, 5000);
 };
