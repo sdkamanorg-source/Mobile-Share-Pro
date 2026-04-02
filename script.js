@@ -14,7 +14,7 @@ function playSound() {
   if (sound) sound.play().catch(() => {});
 }
 
-// UPLOAD (CLOUDINARY)
+// UPLOAD
 window.uploadFile = async function () {
 
   playSound();
@@ -27,22 +27,22 @@ window.uploadFile = async function () {
     return;
   }
 
-  // Reset UI
   document.getElementById("progressBar").style.width = "0%";
   document.getElementById("qrcode").innerHTML = "";
-const formData = new FormData();
-formData.append("file", file);
-formData.append("upload_preset", UPLOAD_PRESET);
 
-try {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("upload_preset", UPLOAD_PRESET);
 
-  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`, {
-    method: "POST",
-    body: formData
-  });
+  try {
 
-  const data = await res.json();
-  console.log("Cloudinary response:", data);
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`, {
+      method: "POST",
+      body: formData
+    });
+
+    const data = await res.json();
+    console.log("Cloudinary response:", data);
 
     if (!res.ok || !data.secure_url) {
       alert("❌ Upload failed (Check console)");
@@ -51,23 +51,22 @@ try {
 
     const url = data.secure_url;
 
-    // PROGRESS ANIMATION
+    // Progress
     let progress = 0;
     const bar = document.getElementById("progressBar");
-
     const interval = setInterval(() => {
       progress += 10;
       if (bar) bar.style.width = progress + "%";
       if (progress >= 100) clearInterval(interval);
     }, 100);
 
-    // SHOW FILE LINK
+    // Show link
     const fileUrl = document.getElementById("fileUrl");
     if (fileUrl) {
       fileUrl.innerHTML = `<a href="${url}" target="_blank">${url}</a>`;
     }
 
-    // QR GENERATE
+    // QR
     new QRCode(document.getElementById("qrcode"), {
       text: url,
       width: 200,
@@ -82,13 +81,13 @@ try {
   }
 };
 
-// SCANNER
+// SCANNER (🔥 FIXED FOR MOBILE)
 window.startScanner = function () {
 
   playSound();
 
   const reader = document.getElementById("reader");
-  reader.innerHTML = ""; // reset scanner
+  reader.innerHTML = "";
 
   const scanner = new Html5Qrcode("reader");
 
@@ -97,9 +96,24 @@ window.startScanner = function () {
     { fps: 10, qrbox: 250 },
 
     (decodedText) => {
-      playSound();
-      window.open(decodedText, "_blank");
+
+      console.log("Scanned:", decodedText);
+      alert("✅ QR Scanned!");
+
+      // 🔥 STOP SCANNER FIRST
       scanner.stop();
+
+      // 🔥 SHOW BUTTON (BEST FOR MOBILE)
+      reader.innerHTML = `
+        <div style="text-align:center;">
+          <p>📎 File Ready</p>
+          <a href="${decodedText}" target="_blank">
+            <button style="padding:12px 20px;font-size:16px;">
+              Open File 🔗
+            </button>
+          </a>
+        </div>
+      `;
     },
 
     (err) => {
