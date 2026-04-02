@@ -45,11 +45,14 @@ window.uploadFile = async function () {
     console.log("Cloudinary response:", data);
 
     if (!res.ok || !data.secure_url) {
-      alert("❌ Upload failed (Check console)");
+      alert("❌ Upload failed");
       return;
     }
 
     const url = data.secure_url;
+
+    // ✅ IMPORTANT DEBUG
+    console.log("FINAL URL:", url);
 
     // Progress
     let progress = 0;
@@ -61,10 +64,8 @@ window.uploadFile = async function () {
     }, 100);
 
     // Show link
-    const fileUrl = document.getElementById("fileUrl");
-    if (fileUrl) {
-      fileUrl.innerHTML = `<a href="${url}" target="_blank">${url}</a>`;
-    }
+    document.getElementById("fileUrl").innerHTML =
+      `<a href="${url}" target="_blank">${url}</a>`;
 
     // QR
     new QRCode(document.getElementById("qrcode"), {
@@ -73,15 +74,15 @@ window.uploadFile = async function () {
       height: 200
     });
 
-    alert("✅ Upload + QR Ready 🔥");
+    alert("✅ QR Ready");
 
   } catch (e) {
     console.log("Upload error:", e);
-    alert("❌ Upload error (Network / CORS)");
+    alert("❌ Upload error");
   }
 };
 
-// SCANNER (🔥 FIXED FOR MOBILE)
+// SCANNER (🔥 FINAL FIX)
 window.startScanner = function () {
 
   playSound();
@@ -97,16 +98,29 @@ window.startScanner = function () {
 
     (decodedText) => {
 
-      console.log("Scanned:", decodedText);
-      alert("✅ QR Scanned!");
+      console.log("SCANNED:", decodedText);
 
-      // 🔥 STOP SCANNER FIRST
+      // ❗ STOP CAMERA FIRST
       scanner.stop();
 
-      // 🔥 SHOW BUTTON (BEST FOR MOBILE)
+      // ❗ VALIDATE LINK
+      if (!decodedText.startsWith("http")) {
+        alert("❌ Invalid QR (Not a link)");
+        return;
+      }
+
+      // 🔥 TRY AUTO OPEN
+      try {
+        window.location.href = decodedText;
+      } catch (e) {
+        console.log("Redirect failed:", e);
+      }
+
+      // 🔥 ALWAYS SHOW BUTTON (backup)
       reader.innerHTML = `
         <div style="text-align:center;">
-          <p>📎 File Ready</p>
+          <p>✅ Scan Successful</p>
+          <p style="font-size:12px;word-break:break-all;">${decodedText}</p>
           <a href="${decodedText}" target="_blank">
             <button style="padding:12px 20px;font-size:16px;">
               Open File 🔗
@@ -120,7 +134,7 @@ window.startScanner = function () {
       console.log("Scan error:", err);
     }
   ).catch(err => {
-    console.log("Camera start error:", err);
-    alert("❌ Camera access denied");
+    console.log("Camera error:", err);
+    alert("❌ Camera blocked");
   });
 };
